@@ -2,18 +2,6 @@
 import sys
 from time import time
 
-from SimpleXMLRPCServer import SimpleXMLRPCServer
-import threading
-
-import logging
-
-logging.basicConfig(
-	level=logging.DEBUG,
-	format='%(asctime)s %(levelname)s %(message)s',
-#	filename='myapp.log',
-#	filemode='w'
-)
-
 from periodic import Periodic
 
 class Balancer(object):
@@ -32,7 +20,7 @@ class Balancer(object):
 		self.done = set()
 
 		self.pingtimes = {}
-		
+
 		self.cleanup_thread = Periodic(self.cleanup, self.cleanup_interval)
 
 	def get_status(self):
@@ -100,21 +88,31 @@ class Balancer(object):
 		self.cleanup_thread.stop()
 
 
-PORT = 8000
+if __name__ == "__main__":
 
-try:
-	print 'Use Control-C to exit'
+	from SimpleXMLRPCServer import SimpleXMLRPCServer
 
-	server = SimpleXMLRPCServer(("localhost", PORT), logRequests=False)
-	print "Listening on port %d..." % PORT
-	
-	balancer = Balancer(n=3292673, chunksize=1000, ping_timeout=5, cleanup_interval=5)
-	server.register_instance(balancer)
-	balancer.start()
+	import logging
 
-	server.serve_forever()
-except KeyboardInterrupt:
-	print 'Exiting'
-	balancer.stop()
-	sys.exit(0)
+	logging.basicConfig(
+		level=logging.DEBUG,
+		format='%(asctime)s %(levelname)s %(message)s',
+	)
 
+	PORT = 8000
+
+	try:
+		print 'Use Control-C to exit'
+
+		server = SimpleXMLRPCServer(("localhost", PORT), logRequests=False)
+		print "Listening on port %d..." % PORT
+
+		balancer = Balancer(n=3292673, chunksize=1000, ping_timeout=5, cleanup_interval=5)
+		server.register_instance(balancer)
+		balancer.start()
+
+		server.serve_forever()
+	except KeyboardInterrupt:
+		print 'Exiting'
+		balancer.stop()
+		sys.exit(0)
